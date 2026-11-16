@@ -1,4 +1,4 @@
-// CSI301 Assignment 5: Bank Smart Contract DApp Controller
+// Bank Smart Contract DApp Controller
 // Author: นายอภิรักษ์ สงแจ้งใหญ่ (รหัส 66081358)
 // Sripatum University
 

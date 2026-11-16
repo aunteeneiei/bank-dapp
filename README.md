@@ -1,4 +1,4 @@
-# 🏦 CSI301 Assignment 5: Bank Smart Contract DApp
+# 🏦 Bank Smart Contract DApp
 
 > **วิชา:** CSI301 การพัฒนาสมาร์ตคอนแทร็กต์ (Smart Contract Development)  
 > **อาจารย์ผู้สอน:** มหาวิทยาลัยศรีปทุม (Sripatum University)  
