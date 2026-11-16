@@ -54,14 +54,29 @@ let contract = null;
 let userAddress = null;
 let currentBankBalanceWei = 0n;
 
+// Infura State
+let activeMode = 'metamask'; // 'metamask' | 'infura'
+let infuraProvider = null;
 const STORAGE_KEY_CONTRACT = "csi301_bank_contract_address";
+const STORAGE_KEY_INFURA_KEY = "csi301_infura_key";
+const STORAGE_KEY_INFURA_WALLET = "csi301_infura_wallet";
 
 window.addEventListener('DOMContentLoaded', async () => {
-    // 1. Load saved contract address from localStorage
+    // 1. Load saved contract & Infura settings from localStorage
     const savedAddress = localStorage.getItem(STORAGE_KEY_CONTRACT) || "";
     if (savedAddress) {
         document.getElementById('inputContractAddress').value = savedAddress;
         updateContractStatus(savedAddress, true);
+    }
+
+    const savedInfuraKey = localStorage.getItem(STORAGE_KEY_INFURA_KEY) || "";
+    if (savedInfuraKey) {
+        document.getElementById('inputInfuraKey').value = savedInfuraKey;
+    }
+
+    const savedInfuraWallet = localStorage.getItem(STORAGE_KEY_INFURA_WALLET) || "";
+    if (savedInfuraWallet) {
+        document.getElementById('inputInfuraTargetWallet').value = savedInfuraWallet;
     }
 
     // 2. Setup button click listeners
@@ -72,6 +87,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btnWithdraw').addEventListener('click', handleWithdraw);
     document.getElementById('btnMaxWithdraw').addEventListener('click', handleMaxWithdraw);
     document.getElementById('btnClearLog').addEventListener('click', clearTxLogs);
+
+    // Infura Mode Switchers
+    document.getElementById('tabModeMetaMask').addEventListener('click', () => switchProviderMode('metamask'));
+    document.getElementById('tabModeInfura').addEventListener('click', () => switchProviderMode('infura'));
+    document.getElementById('btnConnectInfura').addEventListener('click', handleConnectInfura);
 
     // 3. Listen to MetaMask account / network switches
     if (window.ethereum) {
@@ -227,24 +247,147 @@ function updateContractStatus(address, isOk, customMsg) {
 }
 
 // ==========================================
+// Mode Switching & Infura Provider Handler
+// ==========================================
+function switchProviderMode(mode) {
+    activeMode = mode;
+    const btnMeta = document.getElementById('tabModeMetaMask');
+    const btnInfura = document.getElementById('tabModeInfura');
+    const infuraBox = document.getElementById('infuraSettingsBox');
+    const badge = document.getElementById('activeModeBadge');
+
+    if (mode === 'infura') {
+        btnInfura.className = "px-4 py-1.5 rounded-lg text-xs font-medium transition bg-cyan-600 text-white shadow";
+        btnMeta.className = "px-4 py-1.5 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white";
+        infuraBox.classList.remove('hidden');
+        badge.innerText = "Infura RPC Active";
+        badge.className = "px-2 py-0.5 rounded text-[10px] font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30";
+        showStatusAlert('info', 'สลับสู่โหมด Infura RPC', 'ระบบพร้อมเชื่อมต่อผ่าน Infura Gateway Node');
+    } else {
+        btnMeta.className = "px-4 py-1.5 rounded-lg text-xs font-medium transition bg-sky-600 text-white shadow";
+        btnInfura.className = "px-4 py-1.5 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white";
+        infuraBox.classList.add('hidden');
+        badge.innerText = "MetaMask Active";
+        badge.className = "px-2 py-0.5 rounded text-[10px] font-semibold bg-sky-500/20 text-sky-300 border border-sky-500/30";
+        showStatusAlert('info', 'สลับสู่โหมด MetaMask', 'ระบบใช้ MetaMask Browser Provider ในการอ่านและลงนามธุรกรรม');
+    }
+}
+
+async function handleConnectInfura() {
+    let keyOrUrl = document.getElementById('inputInfuraKey').value.trim();
+    const targetWallet = document.getElementById('inputInfuraTargetWallet').value.trim();
+
+    localStorage.setItem(STORAGE_KEY_INFURA_KEY, keyOrUrl);
+    if (targetWallet) {
+        localStorage.setItem(STORAGE_KEY_INFURA_WALLET, targetWallet);
+    }
+
+    let rpcUrl = keyOrUrl;
+    if (!keyOrUrl) {
+        rpcUrl = "https://ethereum-sepolia-rpc.publicnode.com"; // Fallback Sepolia RPC
+    } else if (!keyOrUrl.startsWith("http://") && !keyOrUrl.startsWith("https://")) {
+        // Just the Infura API Key
+        rpcUrl = `https://sepolia.infura.io/v3/${keyOrUrl}`;
+    }
+
+    const indicator = document.getElementById('infuraStatusIndicator');
+    const statusText = document.getElementById('infuraStatusText');
+    const btn = document.getElementById('btnConnectInfura');
+
+    try {
+        btn.disabled = true;
+        btn.innerText = "กำลังเชื่อมต่อ...";
+        statusText.innerText = "กำลังทดสอบเชื่อมต่อ Infura Node...";
+
+        infuraProvider = new ethers.JsonRpcProvider(rpcUrl);
+        const network = await infuraProvider.getNetwork();
+        const block = await infuraProvider.getBlockNumber();
+
+        indicator.innerHTML = `
+            <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></span>
+            <span class="text-cyan-300 font-medium">เชื่อมต่อ Infura สำเร็จ (${network.name} #${block})</span>
+        `;
+        showStatusAlert('success', 'เชื่อมต่อ Infura Node สำเร็จ', `เครือข่าย: ${network.name} (Chain ID: ${network.chainId}) บล็อกล่าสุด: #${block}`);
+
+        // If target wallet not provided, default to userAddress if connected
+        if (!targetWallet && userAddress) {
+            document.getElementById('inputInfuraTargetWallet').value = userAddress;
+        }
+
+        // Auto check balance via Infura if contract is set
+        const contractAddr = document.getElementById('inputContractAddress').value.trim();
+        if (contractAddr && ethers.isAddress(contractAddr)) {
+            checkBankBalance();
+        }
+    } catch (err) {
+        console.error("handleConnectInfura error:", err);
+        indicator.innerHTML = `
+            <span class="w-2.5 h-2.5 rounded-full bg-red-400"></span>
+            <span class="text-red-400">เชื่อมต่อ Infura ล้มเหลว</span>
+        `;
+        showStatusAlert('error', 'เชื่อมต่อ Infura ล้มเหลว', err.message || err);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "🔌 เชื่อมต่อผ่าน Infura Node";
+    }
+}
+
+// ==========================================
 // 3. CheckBlance (ตรวจสอบยอดเงินคงเหลือ)
 // ==========================================
 async function checkBankBalance() {
-    if (!contract) {
-        if (!signer) {
-            showStatusAlert('warning', 'กรุณาเชื่อมต่อ MetaMask', 'ต้องเชื่อมต่อกระเป๋าก่อนจึงจะสามารถตรวจสอบยอดเงินได้');
-        } else {
-            showStatusAlert('warning', 'กรุณาระบุและเชื่อมต่อ Smart Contract', 'โปรดระบุ Contract Address ด้านบนและกดเชื่อมต่อสัญญา');
-        }
-        return;
-    }
-
     const icon = document.getElementById('iconRefresh');
     if (icon) icon.classList.add('rotate-180');
 
     try {
+        const contractAddr = document.getElementById('inputContractAddress').value.trim();
+        if (!contractAddr || !ethers.isAddress(contractAddr)) {
+            showStatusAlert('warning', 'กรุณาระบุ Smart Contract Address', 'โปรดระบุที่อยู่ของ Bank.sol ในช่องด้านบน');
+            return;
+        }
+
+        let balanceWei;
+
+        // Mode 1: Infura RPC Mode
+        if (activeMode === 'infura') {
+            if (!infuraProvider) {
+                await handleConnectInfura();
+            }
+            if (!infuraProvider) {
+                showStatusAlert('warning', 'ยังไม่ได้เชื่อมต่อ Infura', 'กรุณากดเชื่อมต่อ Infura Node ก่อน');
+                return;
+            }
+
+            let queryFrom = document.getElementById('inputInfuraTargetWallet').value.trim() || userAddress;
+            if (!queryFrom || !ethers.isAddress(queryFrom)) {
+                showStatusAlert('warning', 'กรุณาระบุ Wallet Address', 'ในโหมด Infura จำเป็นต้องระบุ Wallet Address เป้าหมายเพื่อจำลอง msg.sender ใน checkBlance()');
+                return;
+            }
+
+            const readContract = new ethers.Contract(contractAddr, DEFAULT_ABI, infuraProvider);
+            balanceWei = await readContract.checkBlance.staticCall({ from: queryFrom });
+            currentBankBalanceWei = BigInt(balanceWei.toString());
+
+            const balanceEth = ethers.formatEther(currentBankBalanceWei);
+            document.getElementById('bankBalanceDisplay').innerText = parseFloat(balanceEth).toFixed(4);
+            document.getElementById('bankBalanceWeiDisplay').innerText = currentBankBalanceWei.toString();
+
+            showStatusAlert('success', 'ตรวจสอบยอดเงินผ่าน Infura สำเร็จ (CheckBlance)', `Address: ${queryFrom} | ยอดเงินในธนาคาร: ${balanceEth} ETH (ดึงผ่าน Infura RPC Node)`);
+            return;
+        }
+
+        // Mode 2: MetaMask Mode
+        if (!contract) {
+            if (!signer) {
+                showStatusAlert('warning', 'กรุณาเชื่อมต่อ MetaMask', 'ต้องเชื่อมต่อกระเป๋าก่อนจึงจะสามารถตรวจสอบยอดเงินได้');
+            } else {
+                showStatusAlert('warning', 'กรุณาระบุและเชื่อมต่อ Smart Contract', 'โปรดระบุ Contract Address ด้านบนและกดเชื่อมต่อสัญญา');
+            }
+            return;
+        }
+
         // Calling checkBlance() exactly as defined in the slide contract
-        const balanceWei = await contract.checkBlance();
+        balanceWei = await contract.checkBlance();
         currentBankBalanceWei = BigInt(balanceWei.toString());
 
         const balanceEth = ethers.formatEther(currentBankBalanceWei);

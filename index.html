@@ -107,6 +107,63 @@
             </div>
         </div>
 
+        <!-- Mode & Provider Selection Section (รองรับทั้ง MetaMask และ Infura RPC) -->
+        <div class="glass-card rounded-2xl p-5 border-slate-800">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-xl">
+                        ⚡
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-slate-200 flex items-center space-x-2">
+                            <span>โหมดการเชื่อมต่อ RPC Node (Provider Selection)</span>
+                            <span id="activeModeBadge" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-sky-500/20 text-sky-300 border border-sky-500/30">MetaMask Active</span>
+                        </h3>
+                        <p class="text-xs text-slate-400">เลือกเชื่อมต่อผ่านกระเป๋า MetaMask หรือเชื่อมต่อผ่าน Infura Gateway Node โดยตรง</p>
+                    </div>
+                </div>
+
+                <!-- Provider Tabs -->
+                <div class="inline-flex rounded-xl bg-slate-900 p-1 border border-slate-800 self-start md:self-auto">
+                    <button id="tabModeMetaMask" class="px-4 py-1.5 rounded-lg text-xs font-medium transition bg-sky-600 text-white shadow">
+                        🦊 MetaMask Provider
+                    </button>
+                    <button id="tabModeInfura" class="px-4 py-1.5 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white">
+                        ⚡ Infura RPC Provider
+                    </button>
+                </div>
+            </div>
+
+            <!-- Infura Configuration Drawer (เมื่อเลือก Infura Mode) -->
+            <div id="infuraSettingsBox" class="hidden pt-3 border-t border-slate-800/80 space-y-3">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-slate-300 font-medium mb-1">
+                            Infura API Key (Project ID) หรือ Sepolia RPC URL
+                        </label>
+                        <input id="inputInfuraKey" type="text" placeholder="ใส่ Infura API Key หรือ URL https://sepolia.infura.io/v3/..." class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyan-500">
+                        <p class="text-[11px] text-slate-500 mt-1">ค่าเริ่มต้นจะใช้ Sepolia Gateway สาธารณะหากไม่ได้ระบุ Key</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-300 font-medium mb-1">
+                            เป้าหมาย Wallet Address (สำหรับเรียกดู CheckBlance ผ่าน Infura)
+                        </label>
+                        <input id="inputInfuraTargetWallet" type="text" placeholder="0x..." class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-cyan-500">
+                        <p class="text-[11px] text-slate-500 mt-1">ระบุ Address ของคุณเพื่อดูยอดคงเหลือที่ฝากไว้ในสัญญา</p>
+                    </div>
+                </div>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-slate-900">
+                    <div id="infuraStatusIndicator" class="text-xs text-slate-400 flex items-center space-x-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-slate-600"></span>
+                        <span id="infuraStatusText">ยังไม่ได้เชื่อมต่อ Infura RPC</span>
+                    </div>
+                    <button id="btnConnectInfura" class="px-4 py-1.5 bg-gradient-to-r from-cyan-600 to-sky-600 hover:from-cyan-500 hover:to-sky-500 text-white rounded-xl text-xs font-medium transition shadow-md whitespace-nowrap">
+                        🔌 เชื่อมต่อผ่าน Infura Node
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Contract Connection Section (หัวข้อ: การเชื่อมต่อ Smart Contract) -->
         <div class="glass-card rounded-2xl p-5 border-slate-800">
             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
