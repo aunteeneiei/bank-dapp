@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSI301 Bank DApp - ระบบธนาคาร Smart Contract</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Ethers.js v6 CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.5/ethers.umd.min.js"></script>
+    <!-- Google Fonts: Kanit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Kanit', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glow-effect {
+            box-shadow: 0 0 35px -5px rgba(56, 189, 248, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-sky-500 selection:text-white">
+
+    <!-- Top Navigation Header -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-2xl shadow-lg shadow-sky-500/20">
+                    🏦
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <h1 class="text-xl font-bold bg-gradient-to-r from-sky-400 via-indigo-300 to-cyan-300 bg-clip-text text-transparent">
+                            Bank Smart Contract DApp
+                        </h1>
+                        <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-sky-500/20 text-sky-300 border border-sky-500/30">CSI301 Assignment 5</span>
+                    </div>
+                    <p class="text-xs text-slate-400">ระบบบริหารจัดการธุรกรรมธนาคารบน Decentralized Ethereum Blockchain</p>
+                </div>
+            </div>
+
+            <!-- Wallet Connect Area -->
+            <div class="flex items-center space-x-3">
+                <button id="btnConnectWallet" class="px-5 py-2.5 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-medium rounded-xl text-sm shadow-lg shadow-sky-600/20 transition-all flex items-center space-x-2 active:scale-95">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    <span>เชื่อมต่อ MetaMask</span>
+                </button>
+
+                <div id="connectedBox" class="hidden flex items-center space-x-2 bg-slate-900 border border-slate-700/80 px-3 py-1.5 rounded-xl text-xs shadow-md">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="networkName" class="text-sky-400 font-semibold">Sepolia</span>
+                    <span class="text-slate-600">|</span>
+                    <span id="userAccount" class="text-slate-200 font-mono">0x000...000</span>
+                    <span class="text-slate-600">|</span>
+                    <span id="userBalance" class="text-emerald-400 font-mono font-medium">0.0000 ETH</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+        <!-- Student Identification Card (ตามข้อกำหนดบนหน้าเว็บ) -->
+        <div class="glass-card glow-effect rounded-2xl p-6 relative overflow-hidden border-sky-500/20">
+            <div class="absolute -top-12 -right-12 w-48 h-48 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="flex items-center space-x-4">
+                    <div class="w-14 h-14 rounded-full bg-gradient-to-tr from-sky-500/30 to-indigo-500/30 border border-sky-400/40 flex items-center justify-center text-sky-300 text-2xl font-bold shadow-inner">
+                        🎓
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs uppercase tracking-wider text-sky-400 font-semibold">ข้อมูลผู้จัดทำ DApp / Student Information</span>
+                        </div>
+                        <h2 class="text-2xl font-bold text-white tracking-wide mt-0.5">
+                            นายอภิรักษ์ สงแจ้งใหญ่ <span class="text-base text-slate-400 font-normal">(Aphirak Songjangyai)</span>
+                        </h2>
+                        <div class="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-slate-300">
+                            <span class="bg-sky-950/80 text-sky-300 border border-sky-800/80 px-2.5 py-1 rounded-md font-mono font-bold text-sm">
+                                รหัสนักศึกษา: 66081358
+                            </span>
+                            <span>•</span>
+                            <span class="text-slate-300">คณะเทคโนโลยีสารสนเทศ สาขาวิทยาการคอมพิวเตอร์และนวัตกรรมซอฟต์แวร์ (CSI)</span>
+                            <span>•</span>
+                            <span class="text-slate-400">มหาวิทยาลัยศรีปทุม (Sripatum University)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 self-start md:self-auto">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-950/80 text-emerald-400 border border-emerald-800">
+                        <span class="w-2 h-2 mr-1.5 rounded-full bg-emerald-400"></span> Ethereum Sepolia Testnet
+                    </span>
+                    <a href="https://github.com/aunteeneiei/bank-dapp" target="_blank" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 border border-slate-700 rounded-full transition flex items-center space-x-1">
+                        <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                        <span>GitHub Repo</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contract Connection Section (หัวข้อ: การเชื่อมต่อ Smart Contract) -->
+        <div class="glass-card rounded-2xl p-5 border-slate-800">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+                        🔗
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-slate-200">1. การเชื่อมต่อ Smart Contract (Bank Address)</h3>
+                        <p class="text-xs text-slate-400">ระบุ Address ของ Smart Contract ธนาคารที่ Deploy บน Sepolia Testnet</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full lg:w-auto">
+                    <div class="relative flex-grow sm:w-96">
+                        <input id="inputContractAddress" type="text" placeholder="0x..." class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500" value="">
+                    </div>
+                    <button id="btnConnectContract" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-medium transition shadow-md whitespace-nowrap">
+                        เชื่อมต่อ Contract
+                    </button>
+                    <a id="linkEtherscanContract" href="#" target="_blank" class="hidden px-3 py-2 bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 rounded-xl text-xs font-medium transition flex items-center justify-center space-x-1 whitespace-nowrap">
+                        <span>ดูบน Etherscan</span>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                    </a>
+                </div>
+            </div>
+            <div id="contractStatusBadge" class="mt-3 flex items-center text-xs text-slate-400 space-x-2">
+                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                <span>สถานะสัญญา: <span id="contractStatusText" class="text-slate-300">ยังไม่ได้ระบุที่อยู่ Smart Contract</span></span>
+            </div>
+        </div>
+
+        <!-- 3 Main Operation Cards Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+            <!-- Card 1: CheckBlance (ตรวจสอบยอดเงินคงเหลือในธนาคาร) -->
+            <div class="glass-card rounded-2xl p-6 border-slate-800 flex flex-col justify-between hover:border-sky-500/40 transition duration-300">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-8 h-8 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold">
+                                💰
+                            </div>
+                            <h3 class="font-bold text-slate-100">CheckBlance</h3>
+                        </div>
+                        <span class="text-[11px] px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 font-mono border border-sky-500/20">view function</span>
+                    </div>
+
+                    <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+                        ตรวจสอบยอดเงินคงเหลือของผู้ใช้งานที่ฝากไว้ในระบบ Smart Contract (<span class="font-mono text-sky-300">checkBlance()</span>)
+                    </p>
+
+                    <div class="bg-slate-900/90 rounded-xl p-4 border border-slate-800 mb-4">
+                        <div class="text-xs text-slate-400">ยอดเงินฝากคงเหลือในธนาคาร</div>
+                        <div class="flex items-baseline space-x-2 mt-1">
+                            <span id="bankBalanceDisplay" class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-indigo-300 font-mono">0.0000</span>
+                            <span class="text-sm font-semibold text-slate-400">ETH</span>
+                        </div>
+                        <div class="text-[11px] text-slate-500 font-mono mt-1 break-all">
+                            ≈ <span id="bankBalanceWeiDisplay">0</span> Wei
+                        </div>
+                    </div>
+                </div>
+
+                <button id="btnCheckBalance" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 hover:border-sky-500/50 rounded-xl text-sm font-medium transition flex items-center justify-center space-x-2">
+                    <svg id="iconRefresh" class="w-4 h-4 transition duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    <span>ตรวจสอบยอดเงิน (CheckBlance)</span>
+                </button>
+            </div>
+
+            <!-- Card 2: Deposit (การฝากเงิน) -->
+            <div class="glass-card rounded-2xl p-6 border-slate-800 flex flex-col justify-between hover:border-emerald-500/40 transition duration-300">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+                                📥
+                            </div>
+                            <h3 class="font-bold text-slate-100">Deposit</h3>
+                        </div>
+                        <span class="text-[11px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono border border-emerald-500/20">payable</span>
+                    </div>
+
+                    <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+                        ฝากเหรียญ ETH เข้าบัญชีธนาคารบน Smart Contract (<span class="font-mono text-emerald-300">deposit()</span>)
+                    </p>
+
+                    <div class="space-y-3 mb-4">
+                        <div>
+                            <label class="block text-xs text-slate-300 font-medium mb-1">จำนวน ETH ที่ต้องการฝาก</label>
+                            <div class="relative">
+                                <input id="depositAmount" type="number" step="0.0001" min="0.0001" placeholder="0.01" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 pr-14">
+                                <span class="absolute right-3 top-2 text-xs font-semibold text-slate-400">ETH</span>
+                            </div>
+                        </div>
+
+                        <!-- Quick Presets -->
+                        <div class="flex items-center space-x-1.5">
+                            <button type="button" onclick="setDepositAmount('0.001')" class="px-2 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg text-[11px] text-slate-300 font-mono transition">0.001</button>
+                            <button type="button" onclick="setDepositAmount('0.005')" class="px-2 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg text-[11px] text-slate-300 font-mono transition">0.005</button>
+                            <button type="button" onclick="setDepositAmount('0.01')" class="px-2 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg text-[11px] text-slate-300 font-mono transition">0.01</button>
+                            <button type="button" onclick="setDepositAmount('0.05')" class="px-2 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg text-[11px] text-slate-300 font-mono transition">0.05</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="btnDeposit" class="w-full py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-medium rounded-xl text-sm shadow-lg shadow-emerald-700/20 transition-all flex items-center justify-center space-x-2 active:scale-95">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                    <span>ฝากเงิน (Deposit)</span>
+                </button>
+            </div>
+
+            <!-- Card 3: Withdraw (การถอนเงิน) -->
+            <div class="glass-card rounded-2xl p-6 border-slate-800 flex flex-col justify-between hover:border-amber-500/40 transition duration-300">
+                <div>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
+                                📤
+                            </div>
+                            <h3 class="font-bold text-slate-100">Withdraw</h3>
+                        </div>
+                        <span class="text-[11px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 font-mono border border-amber-500/20">nonpayable</span>
+                    </div>
+
+                    <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+                        ถอนเหรียญ ETH ออกจากธนาคารกลับเข้ากระเป๋า MetaMask (<span class="font-mono text-amber-300">withdraw(amount)</span>)
+                    </p>
+
+                    <div class="space-y-3 mb-4">
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="block text-xs text-slate-300 font-medium">จำนวน ETH ที่ต้องการถอน</label>
+                                <button type="button" id="btnMaxWithdraw" class="text-[11px] text-amber-400 hover:underline font-mono">Max (ทั้งหมด)</button>
+                            </div>
+                            <div class="relative">
+                                <input id="withdrawAmount" type="number" step="0.0001" min="0.0001" placeholder="0.005" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 pr-14">
+                                <span class="absolute right-3 top-2 text-xs font-semibold text-slate-400">ETH</span>
+                            </div>
+                        </div>
+
+                        <!-- Quick Presets -->
+                        <div class="flex items-center space-x-1.5">
+                            <button type="button" onclick="setWithdrawPercentage(25)" class="px-2 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg text-[11px] text-slate-300 font-mono transition">25%</button>
+                            <button type="button" onclick="setWithdrawPercentage(50)" class="px-2 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg text-[11px] text-slate-300 font-mono transition">50%</button>
+                            <button type="button" onclick="setWithdrawPercentage(75)" class="px-2 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg text-[11px] text-slate-300 font-mono transition">75%</button>
+                            <button type="button" onclick="setWithdrawPercentage(100)" class="px-2 py-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg text-[11px] text-slate-300 font-mono transition">100%</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="btnWithdraw" class="w-full py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-medium rounded-xl text-sm shadow-lg shadow-amber-700/20 transition-all flex items-center justify-center space-x-2 active:scale-95">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                    <span>ถอนเงิน (Withdraw)</span>
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Transaction Notification Status Box -->
+        <div id="statusAlertBox" class="hidden rounded-xl p-4 border text-sm transition-all flex items-start space-x-3">
+            <span id="statusIcon" class="text-xl">ℹ️</span>
+            <div class="flex-grow">
+                <div id="statusTitle" class="font-bold">แจ้งเตือนระบบ</div>
+                <div id="statusMessage" class="text-xs mt-0.5 break-all">รายละเอียด...</div>
+                <div id="statusTxHash" class="text-xs mt-1 font-mono hidden"></div>
+            </div>
+            <button onclick="hideStatusAlert()" class="text-slate-400 hover:text-white text-xs">✕</button>
+        </div>
+
+        <!-- Activity History & Smart Contract Events Section -->
+        <div class="glass-card rounded-2xl p-6 border-slate-800">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                        📋
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-100">ประวัติการทำธุรกรรม (Blockchain Events Log)</h3>
+                        <p class="text-xs text-slate-400">ดักจับ Event: Deposit(owner, amount) และ Withdraw(owner, amount) แบบเรียลไทม์</p>
+                    </div>
+                </div>
+                <button id="btnClearLog" class="text-xs text-slate-400 hover:text-slate-200 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg hover:border-slate-700 transition">
+                    ล้างประวัติ
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-900/90 text-slate-400 uppercase font-mono border-b border-slate-800">
+                        <tr>
+                            <th class="py-3 px-4">ประเภทรายการ</th>
+                            <th class="py-3 px-4">ผู้ทำรายการ (Owner)</th>
+                            <th class="py-3 px-4 text-right">จำนวน (ETH)</th>
+                            <th class="py-3 px-4 text-right">จำนวน (Wei)</th>
+                            <th class="py-3 px-4 text-center">เวลา / สถานะ</th>
+                            <th class="py-3 px-4 text-center">Tx Hash</th>
+                        </tr>
+                    </thead>
+                    <tbody id="txLogTableBody" class="divide-y divide-slate-800/60 font-mono">
+                        <tr id="noTxRow">
+                            <td colspan="6" class="py-8 text-center text-slate-500 font-sans">
+                                ยังไม่มีรายการธุรกรรมในเซสชันนี้ — เมื่อทำการฝากหรือถอนเงิน รายการจะแสดงขึ้นที่นี่อัตโนมัติ
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Solidity Source Code Quick Reference Drawer / Accordion -->
+        <div class="glass-card rounded-2xl p-5 border-slate-800">
+            <details class="group">
+                <summary class="flex items-center justify-between cursor-pointer list-none">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sky-400 font-mono text-sm">📄</span>
+                        <span class="text-sm font-semibold text-slate-300">ดูโค้ด Smart Contract (Bank.sol) จากโจทย์ Assignment</span>
+                    </div>
+                    <span class="text-slate-500 text-xs group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <div class="mt-4 pt-3 border-t border-slate-800">
+                    <pre class="bg-slate-950 p-4 rounded-xl text-xs font-mono text-emerald-300 overflow-x-auto border border-slate-800"><code>// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract Bank {
+    mapping (address => uint) _balances;
+    event Deposit(address indexed owner, uint amount);
+    event Withdraw(address indexed owner, uint amount);
+
+    function deposit() public payable {
+        require(msg.value > 0, "Deposit money is zero");
+        _balances[msg.sender] += msg.value;
+        emit Deposit(msg.sender, msg.value);
+    }
+
+    function withdraw(uint amount) public {
+        require(amount > 0 && amount <= _balances[msg.sender], "not enough money");
+        payable(msg.sender).transfer(amount);
+        _balances[msg.sender] -= amount;
+        emit Withdraw(msg.sender, amount);
+    }
+
+    function checkBlance() public view returns(uint balance) {
+        return _balances[msg.sender];
+    }
+}</code></pre>
+                </div>
+            </details>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-900 bg-slate-950 py-6 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div>
+                © 2026 นายอภิรักษ์ สงแจ้งใหญ่ (รหัส 66081358) — CSI301 Smart Contract Development
+            </div>
+            <div class="flex items-center space-x-4">
+                <span class="text-slate-600">|</span>
+                <span>Sripatum University</span>
+                <span class="text-slate-600">|</span>
+                <a href="https://github.com/aunteeneiei/bank-dapp" target="_blank" class="hover:text-sky-400 transition">GitHub Pages</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- App JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
